@@ -1,0 +1,36 @@
+CREATE DATABASE IF NOT EXISTS surat_masuk CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE surat_masuk;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS surat_masuk (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ no INT UNSIGNED NOT NULL,
+ tanggal_masuk DATE NOT NULL,
+ tanggal_disposisi DATE NULL,
+ uraian_pengusul TEXT NOT NULL,
+ keterangan TEXT NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ INDEX idx_tanggal_masuk (tanggal_masuk),
+ INDEX idx_tanggal_disposisi (tanggal_disposisi)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS surat_sequences (
+    id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    next_no INT UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO surat_sequences (id, next_no)
+SELECT 1, COALESCE(MAX(no), 0) + 1 FROM surat_masuk
+ON DUPLICATE KEY UPDATE next_no = GREATEST(next_no, VALUES(next_no));
+
+INSERT INTO users (username, password)
+VALUES ('admin', '$2y$10$vVm93aRDmksI8MX3pJVsi.ZK8VGvPx7k7Iww.1XpJSco7LZEItpOa')
+ON DUPLICATE KEY UPDATE username = VALUES(username);

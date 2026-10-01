@@ -1,0 +1,7 @@
+<?php
+require APP_ROOT . '/includes/header.php';
+require APP_ROOT . '/includes/sidebar.php';
+?>
+<div class="d-flex justify-content-between align-items-center mb-4"><h2 class="page-title mb-0">Detail Surat #<?= (int) $surat['no'] ?></h2><div class="d-flex gap-2"><a class="btn btn-outline-primary" href="edit.php?id=<?= (int) $id ?>">Edit</a><form method="post" action="hapus.php" data-confirm-delete-form><input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>"><input type="hidden" name="id" value="<?= (int) $id ?>"><button class="btn btn-outline-danger" type="submit">Hapus</button></form></div></div>
+<div class="card p-4"><dl class="row mb-0"><dt class="col-md-3 py-3">No</dt><dd class="col-md-9 py-3"><?= (int) $surat['no'] ?></dd><dt class="col-md-3 py-3 border-top">Tanggal Masuk</dt><dd class="col-md-9 py-3 border-top"><?= e($surat['tanggal_masuk']) ?></dd><dt class="col-md-3 py-3 border-top">Tanggal Disposisi</dt><dd class="col-md-9 py-3 border-top"><?= e($surat['tanggal_disposisi'] ?: '-') ?></dd><dt class="col-md-3 py-3 border-top">Uraian / Pengusul</dt><dd class="col-md-9 py-3 border-top"><?= nl2br(e($surat['uraian_pengusul'])) ?></dd><dt class="col-md-3 py-3 border-top">Keterangan</dt><dd class="col-md-9 py-3 border-top"><?= nl2br(e($surat['keterangan'] ?: '-')) ?></dd></dl></div>
+<?php require APP_ROOT . '/includes/footer.php'; ?>
