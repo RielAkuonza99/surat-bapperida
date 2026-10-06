@@ -175,57 +175,46 @@ CREATE TABLE IF NOT EXISTS surat_sequences (
     next_no INT UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO users (username, password, role, is_active)
-VALUES ('admin', '$2y$10$vVm93aRDmksI8MX3pJVsi.ZK8VGvPx7k7Iww.1XpJSco7LZEItpOa', 'admin', 1)
-ON DUPLICATE KEY UPDATE role = 'admin', is_active = 1;
-
--- Data berikut hanya contoh uji, bukan arsip surat resmi.
-INSERT INTO surat_masuk (
-    kode_pencarian, no, nama, judul, nomor_surat, tanggal_surat, tanggal_masuk,
-    sifat, surat_dari, pengusul, uraian, uraian_pengusul, keterangan, created_by
-) VALUES
-    (
-        'SM-DEMO-2026-01', 1, 'Data Uji 01', 'CONTOH: Permohonan Data Perencanaan',
-        'CONTOH/SM/2026/001', '2026-10-01', '2026-10-02', 'Biasa',
-        'Instansi Contoh (Data Uji)', 'Pengusul Contoh 01',
-        'DATA CONTOH: pengujian metadata dan pencarian surat.',
-        '[DATA CONTOH] Pengusul Contoh 01 mengajukan data untuk pengujian aplikasi.',
-        'DATA CONTOH, bukan surat resmi.',
-        (SELECT id FROM users WHERE username = 'admin' LIMIT 1)
-    ),
-    (
-        'SM-DEMO-2026-02', 2, 'Data Uji 02', 'CONTOH: Koordinasi Pengumpulan Data',
-        'CONTOH/SM/2026/002', '2026-09-25', '2026-09-26', 'Biasa',
-        'Instansi Contoh (Data Uji)', 'Pengusul Contoh 02',
-        'DATA CONTOH: pengujian pencatatan uraian dan filter tanggal.',
-        '[DATA CONTOH] Pengusul Contoh 02 meminta koordinasi untuk uji coba.',
-        'DATA CONTOH, bukan surat resmi.',
-        (SELECT id FROM users WHERE username = 'admin' LIMIT 1)
-    ),
-    (
-        'SM-DEMO-2026-03', 3, 'Data Uji 03', 'CONTOH: Undangan Rapat Simulasi',
-        'CONTOH/SM/2026/003', '2026-09-18', '2026-09-19', 'Biasa',
-        'Instansi Contoh (Data Uji)', 'Pengusul Contoh 03',
-        'DATA CONTOH: pengujian tampilan detail arsip dan status dokumen.',
-        '[DATA CONTOH] Pengusul Contoh 03 mengundang peserta ke rapat simulasi.',
-        'DATA CONTOH, bukan surat resmi.',
-        (SELECT id FROM users WHERE username = 'admin' LIMIT 1)
-    )
-ON DUPLICATE KEY UPDATE
-    no = VALUES(no),
-    nama = VALUES(nama),
-    judul = VALUES(judul),
-    nomor_surat = VALUES(nomor_surat),
-    tanggal_surat = VALUES(tanggal_surat),
-    tanggal_masuk = VALUES(tanggal_masuk),
-    sifat = VALUES(sifat),
-    surat_dari = VALUES(surat_dari),
-    pengusul = VALUES(pengusul),
-    uraian = VALUES(uraian),
-    uraian_pengusul = VALUES(uraian_pengusul),
-    keterangan = VALUES(keterangan),
-    created_by = VALUES(created_by);
-
 INSERT INTO surat_sequences (id, next_no)
 SELECT 1, COALESCE(MAX(no), 0) + 1 FROM surat_masuk
 ON DUPLICATE KEY UPDATE next_no = GREATEST(next_no, VALUES(next_no));
+
+-- Konfigurasi API Google Drive dan metadata file asli.
+CREATE TABLE IF NOT EXISTS google_drive_apis (
+    id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    folder_id VARCHAR(255) NOT NULL,
+    service_account_email VARCHAR(255) NOT NULL,
+    credentials_encrypted MEDIUMTEXT NOT NULL,
+    is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    health_status ENUM('unknown', 'healthy', 'error') NOT NULL DEFAULT 'unknown',
+    last_health_check DATETIME NULL,
+    last_used_at DATETIME NULL,
+    last_error VARCHAR(500) NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    CONSTRAINT chk_google_drive_api_slot CHECK (id BETWEEN 1 AND 3),
+    INDEX idx_google_drive_api_enabled (is_enabled, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS surat_documents (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    surat_id INT UNSIGNED NOT NULL,
+    drive_api_id TINYINT UNSIGNED NOT NULL,
+    drive_file_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    file_size BIGINT UNSIGNED NOT NULL,
+    web_view_url VARCHAR(500) NOT NULL,
+    uploaded_by INT UNSIGNED NULL,
+    uploaded_at DATETIME NOT NULL,
+    INDEX idx_surat_documents_surat (surat_id, uploaded_at),
+    UNIQUE KEY uq_surat_documents_drive_file (drive_file_id),
+    CONSTRAINT fk_surat_documents_surat FOREIGN KEY (surat_id) REFERENCES surat_masuk (id) ON DELETE CASCADE,
+    CONSTRAINT fk_surat_documents_drive_api FOREIGN KEY (drive_api_id) REFERENCES google_drive_apis (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_surat_documents_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO users (username, password, role, is_active)
+VALUES ('admin', '$2y$10$vVm93aRDmksI8MX3pJVsi.ZK8VGvPx7k7Iww.1XpJSco7LZEItpOa', 'admin', 1)
+ON DUPLICATE KEY UPDATE role = 'admin', is_active = 1;
