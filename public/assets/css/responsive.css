@@ -27,6 +27,12 @@
         padding: 0;
     }
 
+    .brand-seal {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+    }
+
     .brand-icon,
     .icon-sm {
         width: 38px;
@@ -135,7 +141,7 @@
     }
 
     .sidebar.menu-open .nav.flex-column {
-        max-height: 112px;
+        max-height: 280px;
         opacity: 1;
         visibility: visible;
         transform: translateY(0);
@@ -204,6 +210,7 @@
         align-items: center;
         padding: 8px 10px;
         font-size: .85rem;
+        overflow-wrap: anywhere;
     }
 
     .topbar {

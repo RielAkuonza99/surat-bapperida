@@ -15,7 +15,7 @@
             <div class="alert alert-warning">Silakan login terlebih dahulu untuk melanjutkan.</div>
         <?php endif; ?>
 
-        <form method="post" class="auth-form" autocomplete="off">
+        <form method="post" action="<?= e(url('login')) ?>" class="auth-form" autocomplete="off">
             <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>

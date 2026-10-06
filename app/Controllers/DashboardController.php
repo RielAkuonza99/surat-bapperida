@@ -14,7 +14,8 @@ final class DashboardController
     public function index(): void
     {
         AuthMiddleware::requireLogin();
-        $summary = (new SuratService(new SuratModel(Connection::get()), new AuditLogger()))->dashboard();
+        $pdo = Connection::get();
+        $summary = (new SuratService(new SuratModel($pdo), new AuditLogger($pdo)))->dashboard();
         render('dashboard/index', [
             'pageTitle' => 'Dashboard',
             'total' => $summary['total'],

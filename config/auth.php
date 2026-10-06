@@ -6,17 +6,18 @@ function requireLogin(): void
     App\Middleware\AuthMiddleware::requireLogin();
 }
 
-function redirectIfLoggedIn(string $redirect = 'dashboard.php'): void
+function redirectIfLoggedIn(string $redirect = 'dashboard'): void
 {
-    if (isLoggedIn()) {
+    if (App\Middleware\AuthMiddleware::resumeDeviceSession()) {
         redirect($redirect);
     }
 }
 
 function logoutUser(): void
 {
+    $pdo = App\Database\Connection::get();
     (new App\Services\AuthService(
-        new App\Models\UserModel(App\Database\Connection::get()),
-        new App\Security\AuditLogger()
+        new App\Models\UserModel($pdo),
+        new App\Security\AuditLogger($pdo)
     ))->logout();
 }

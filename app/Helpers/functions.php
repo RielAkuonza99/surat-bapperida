@@ -35,10 +35,28 @@ function requirePost(): void
     }
 }
 
-function redirect(string $location): never
+function redirect(string $location, array $query = []): never
 {
-    header('Location: ' . $location, true, 303);
+    header('Location: ' . url($location, $query), true, 303);
     exit;
+}
+
+function url(string $path = '', array $query = []): string
+{
+    $relativePath = trim($path, '/');
+    $url = APP_BASE_URL . ($relativePath === '' ? '/' : '/' . $relativePath);
+    if ($query !== []) {
+        $url .= '?' . http_build_query($query);
+    }
+
+    return $url;
+}
+
+function requestPath(): string
+{
+    $path = $_SERVER['APP_ROUTE_PATH'] ?? '/';
+
+    return is_string($path) ? $path : '/';
 }
 
 function render(string $template, array $viewData = []): void

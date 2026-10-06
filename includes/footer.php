@@ -1,4 +1,4 @@
-<?php if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php' || isset($_SESSION['user_id'])): ?>
+<?php if (isLoggedIn()): ?>
 </div>
 </main>
 </div>
@@ -13,7 +13,17 @@
         </div>
     </div>
 </div>
+<dialog class="logout-dialog" data-logout-dialog aria-labelledby="logout-dialog-title">
+    <div class="logout-dialog-content">
+        <h2 id="logout-dialog-title">Keluar dari aplikasi?</h2>
+        <p>Sesi pada perangkat ini akan diakhiri. Anda perlu masuk kembali untuk menggunakan aplikasi.</p>
+        <div class="logout-dialog-actions">
+            <button class="btn btn-light" type="button" data-cancel-logout>Batal</button>
+            <button class="btn btn-danger" type="submit" form="logout-form">Ya, keluar</button>
+        </div>
+    </div>
+</dialog>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="assets/js/script.js?v=4"></script>
+<script src="<?= e(url('assets/js/script.js?v=5')) ?>"></script>
 </body>
 </html>

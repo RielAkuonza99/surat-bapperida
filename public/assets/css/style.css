@@ -246,6 +246,7 @@ a:focus-visible {
 	.confirm-dialog {
 		padding: 24px 18px;
 	}
+
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,6 +1,7 @@
 .env
 /storage/logs/*
 /storage/private/*
+/database/backups/*
 !/storage/logs/.htaccess
 !/storage/private/.htaccess
 !/storage/logs/.gitkeep

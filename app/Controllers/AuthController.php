@@ -17,14 +17,15 @@ final class AuthController
 
     public function __construct()
     {
-        $this->auth = new AuthService(new UserModel(Connection::get()), new AuditLogger());
+        $pdo = Connection::get();
+        $this->auth = new AuthService(new UserModel($pdo), new AuditLogger($pdo));
         $this->rateLimiter = new LoginRateLimiter();
     }
 
     public function login(): void
     {
-        if (isLoggedIn()) {
-            redirect('dashboard.php');
+        if (AuthMiddleware::resumeDeviceSession()) {
+            redirect('dashboard');
         }
 
         $pageTitle = 'Login Sistem';
@@ -34,7 +35,7 @@ final class AuthController
             requirePost();
             validateCsrf();
 
-            $remoteAddress = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+            $remoteAddress = AuthMiddleware::clientIp() ?? 'unknown';
             $identities = ['ip:' . $remoteAddress, 'account-ip:' . strtolower($username) . ':' . $remoteAddress];
             foreach ($identities as $identity) {
                 if ($this->rateLimiter->isBlocked($identity)) {
@@ -52,7 +53,7 @@ final class AuthController
                     foreach ($identities as $identity) {
                         $this->rateLimiter->clear($identity);
                     }
-                    redirect('dashboard.php');
+                    redirect('dashboard');
                 }
 
                 foreach ($identities as $identity) {
@@ -76,6 +77,6 @@ final class AuthController
         \requirePost();
         \validateCsrf();
         $this->auth->logout();
-        redirect('index.php');
+        redirect('');
     }
 }
