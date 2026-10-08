@@ -42,7 +42,10 @@ $f = $formData;
             </div>
             <div class="col-md-4">
                 <label class="form-label" for="sifat">Sifat</label>
-                <select id="sifat" name="sifat" class="form-select">
+                <select id="sifat" name="sifat" class="form-select" required>
+                    <?php if (!in_array($f['sifat'], $sifatOptions, true)): ?>
+                        <option value="" selected disabled><?= $f['sifat'] !== '' ? 'Nilai lama: ' . e($f['sifat']) . ' (pilih sifat baru)' : 'Pilih sifat surat' ?></option>
+                    <?php endif; ?>
                     <?php foreach ($sifatOptions as $option): ?>
                         <option value="<?= e($option) ?>" <?= $f['sifat'] === $option ? 'selected' : '' ?>><?= e($option) ?></option>
                     <?php endforeach; ?>

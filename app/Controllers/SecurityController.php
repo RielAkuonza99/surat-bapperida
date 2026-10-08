@@ -5,7 +5,6 @@ namespace App\Controllers;
 
 use App\Database\Connection;
 use App\Middleware\AuthMiddleware;
-use App\Models\ActivityModel;
 use App\Models\AuthSessionModel;
 use App\Security\AuditLogger;
 use App\Services\AuthService;
@@ -16,29 +15,8 @@ final class SecurityController
     public function activity(): void
     {
         AuthMiddleware::requireLogin();
-        $user = currentUser();
-        $isAdmin = ($user['role'] ?? '') === 'admin';
-        $model = new ActivityModel(Connection::get());
-        $sessions = $model->sessions(
-            (int) $user['id'],
-            $isAdmin,
-            (int) ($_GET['sessions_page'] ?? 1)
-        );
-        $logs = $model->auditLogs(
-            (int) $user['id'],
-            $isAdmin,
-            (int) ($_GET['logs_page'] ?? 1)
-        );
-        $notice = $_SESSION['flash'] ?? null;
-        unset($_SESSION['flash']);
-
-        render('security/activity', [
-            'pageTitle' => 'Aktivitas & Sesi',
-            'isAdmin' => $isAdmin,
-            'sessions' => $sessions,
-            'logs' => $logs,
-            'notice' => $notice,
-        ]);
+        header('Location: ' . url('pengaturan') . '#activity', true, 303);
+        exit;
     }
 
     public function revokeSession(): void
@@ -63,7 +41,8 @@ final class SecurityController
             if (!$sessions->revoke((int) $sessionId, (int) $user['id'], 'user_revoked', $ownerId)) {
                 $pdo->rollBack();
                 $_SESSION['flash'] = ['type' => 'warning', 'message' => 'Sesi tidak ditemukan atau sudah tidak aktif.'];
-                redirect('aktivitas');
+                header('Location: ' . url('pengaturan') . '#activity', true, 303);
+                exit;
             }
 
             (new AuditLogger($pdo))->record(
@@ -92,6 +71,7 @@ final class SecurityController
         }
 
         $_SESSION['flash'] = ['type' => 'success', 'message' => 'Akses perangkat berhasil dicabut. Riwayat tetap disimpan untuk audit.'];
-        redirect('aktivitas');
+        header('Location: ' . url('pengaturan') . '#activity', true, 303);
+        exit;
     }
 }

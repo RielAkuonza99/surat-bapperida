@@ -8,7 +8,7 @@ use App\Security\AuditLogger;
 
 final class SuratService
 {
-    public const SIFAT = ['Biasa', 'Penting', 'Segera', 'Rahasia'];
+    public const SIFAT = ['Sangat Segera', 'Segera', 'Rahasia'];
     private const DRIVE_HOSTS = ['drive.google.com', 'docs.google.com'];
 
     public function __construct(private SuratModel $surat, private AuditLogger $audit)
@@ -43,7 +43,7 @@ final class SuratService
             'nomor_surat' => '',
             'tanggal_surat' => '',
             'tanggal_masuk' => date('Y-m-d'),
-            'sifat' => 'Biasa',
+            'sifat' => '',
             'surat_dari' => '',
             'pengusul' => '',
             'uraian' => '',
@@ -92,7 +92,7 @@ final class SuratService
             'nomor_surat' => $text('nomor_surat'),
             'tanggal_surat' => $text('tanggal_surat'),
             'tanggal_masuk' => $text('tanggal_masuk'),
-            'sifat' => $text('sifat') === '' ? 'Biasa' : $text('sifat'),
+            'sifat' => $text('sifat'),
             'surat_dari' => $text('surat_dari'),
             'pengusul' => $text('pengusul'),
             'uraian' => $text('uraian'),
@@ -112,8 +112,7 @@ final class SuratService
             $errors[] = 'Judul surat atau uraian wajib diisi.';
         }
         if (!in_array($data['sifat'], self::SIFAT, true)) {
-            $errors[] = 'Sifat surat tidak dikenal.';
-            $data['sifat'] = 'Biasa';
+            $errors[] = 'Pilih salah satu sifat surat yang tersedia.';
         }
 
         foreach (

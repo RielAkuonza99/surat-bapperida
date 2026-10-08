@@ -1,6 +1,6 @@
 # Catatan Kendala dan Pekerjaan Tertunda
 
-**Tanggal pembaruan:** 6 Oktober 2026
+**Tanggal pembaruan:** 7 Oktober 2026
 **Lingkungan:** Development lokal, Laragon
 **Status:** Belum siap production
 
@@ -11,10 +11,10 @@ Dokumen ini mencatat hambatan dan pekerjaan yang belum dapat dinyatakan selesai.
 | Area | Status | Kendala dan tindak lanjut |
 |---|---|---|
 | Verifikasi production | Belum diuji | Pengujian autentikasi dan otorisasi dilakukan pada salinan aplikasi serta database sementara di lokal. Hasil lokal tidak membuktikan konfigurasi HTTPS, cookie/session, atau pembatasan akses server pada deployment. |
-| Upload dan pemulihan Google Drive | Implementasi lokal, belum diverifikasi | Upload PDF melalui API dan hingga tiga konfigurasi recovery tersedia di aplikasi. Uji koneksi dan upload belum dapat diulang karena layanan MySQL lokal berhenti; konfigurasi credential perlu diuji pada lingkungan lokal. |
+| Upload dan pemulihan Google Drive | Implementasi lokal, belum diverifikasi | Upload PDF melalui API dan hingga tiga konfigurasi recovery tersedia di aplikasi. Uji koneksi dan upload provider belum dilakukan pada audit ini; konfigurasi credential perlu diuji di lingkungan lokal. |
 | Supabase dan sinkronisasi metadata | Implementasi lokal, belum diverifikasi | Integrasi server-side, antrean metadata, status pengiriman, retry, dan pencatatan kegagalan tersedia. Pengiriman provider serta worker belum diverifikasi ulang pada lingkungan aktif. |
 | Backup dan recovery | Belum difinalkan | Strategi serta lokasi backup di luar server aplikasi belum diputuskan. Snapshot `database.sql` sebelum pembaruan tersedia di `database/backups/`; ini bukan dump data database aktif maupun strategi backup production. |
-| Migrasi database existing | Belum diverifikasi pada database aktif | Cadangkan database existing terlebih dahulu, lalu jalankan migration `001_create_surat_sequence.sql` sampai `006_system_metric_samples.sql` secara berurutan, masing-masing satu kali. MySQL lokal saat ini tidak aktif, sehingga status penerapan migration belum dapat dipastikan. |
+| Migrasi database existing | Skema aktif terdeteksi; riwayat penerapan belum diketahui | Audit lokal 7 Oktober 2026 berhasil terhubung ke database aplikasi dan menemukan 10 tabel, termasuk `surat_sequences` dan `system_metric_samples`. Ini memastikan tabel yang diperlukan tersedia, tetapi tidak membuktikan urutan maupun riwayat eksekusi migrasi. Jangan jalankan ulang migrasi pada database existing; cadangkan database dan cocokkan skema sebelum perubahan berikutnya. |
 
 ## Hasil pemeriksaan lokal
 
@@ -22,7 +22,8 @@ Dokumen ini mencatat hambatan dan pekerjaan yang belum dapat dinyatakan selesai.
 - Pegawai dapat melihat sesi dan riwayat akun sendiri; akses langsung ke halaman pengelolaan pengguna ditolak.
 - Pencabutan sesi berhasil mengakhiri akses perangkat uji dan meminta login kembali.
 - Pengujian memakai alamat lokal `127.0.0.1`; pencatatan IP klien di jaringan deployment belum terverifikasi.
-- Database dan salinan aplikasi uji sebelumnya sudah dibersihkan. Snapshot skema sebelum pembaruan tersedia di `database/backups/`; dump database aktif tetap memerlukan MySQL yang berjalan.
+- Database dan salinan aplikasi uji sebelumnya sudah dibersihkan. Snapshot skema sebelum pembaruan tersedia di `database/backups/`; snapshot tersebut bukan dump data database aktif dan backup aktif perlu dibuat terpisah.
+- Audit lokal 7 Oktober 2026: PHP 8.1.10 meluluskan lint pada 54 file PHP; koneksi aplikasi, pencarian surat (termasuk full-text), ringkasan dashboard, dan pembacaan metrik berhasil. Uji metrik memakai transaksi yang di-rollback. Upload Google Drive, sinkronisasi Supabase, dan pengujian production belum dilakukan.
 
 ## Batasan penggunaan
 

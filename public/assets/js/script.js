@@ -1,92 +1,88 @@
 const initializePage = () => {
-    const body = document.body;
     const app = document.querySelector('.app');
     const loadbar = document.querySelector('[data-navigation-loadbar]');
     const connection = navigator.connection ?? navigator.mozConnection ?? navigator.webkitConnection;
 
     if (loadbar) {
-        const updateLoadTiming = () => {
-            const roundTrip = Number(connection?.rtt);
-            const cycle = Number.isFinite(roundTrip) && roundTrip > 0
-                ? Math.min(2200, Math.max(500, roundTrip * 2))
-                : 1000;
-            loadbar.style.setProperty('--network-load-cycle', `${cycle}ms`);
+        let progressTimer = null;
+        let loadingStartedAt = 0;
+        const setProgress = (progress) => {
+            loadbar.style.setProperty('--navigation-progress', `${progress}%`);
+        };
+        const beginLoading = () => {
+            window.clearInterval(progressTimer);
+            loadbar.classList.remove('is-complete');
+            loadbar.classList.add('is-loading', 'is-visible');
+            loadingStartedAt = performance.now();
+            setProgress(8);
+            progressTimer = window.setInterval(() => {
+                const current = Number.parseFloat(loadbar.style.getPropertyValue('--navigation-progress')) || 8;
+                setProgress(Math.min(90, current + Math.max(1, (90 - current) * 0.08)));
+            }, 120);
         };
         const finishLoading = () => {
-            loadbar.classList.add('is-complete');
-            window.setTimeout(() => loadbar.remove(), 220);
+            const finish = () => {
+                window.clearInterval(progressTimer);
+                setProgress(100);
+                loadbar.classList.remove('is-loading');
+                loadbar.classList.add('is-complete');
+                window.setTimeout(() => {
+                    loadbar.classList.remove('is-visible', 'is-complete');
+                    setProgress(0);
+                }, 260);
+            };
+            window.setTimeout(finish, Math.max(0, 180 - (performance.now() - loadingStartedAt)));
         };
 
-        updateLoadTiming();
-        connection?.addEventListener?.('change', updateLoadTiming);
+        const navigateInternally = (event) => {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+            if (!link || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
+
+            const destination = new URL(link.href, location.href);
+            if (destination.origin !== location.origin) return;
+            if (destination.pathname === location.pathname && destination.search === location.search) return;
+            beginLoading();
+        };
+
+        beginLoading();
+        document.addEventListener('click', navigateInternally, true);
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) finishLoading();
+        });
         if (navigator.onLine === false) loadbar.classList.add('is-offline');
         window.addEventListener('online', () => {
             loadbar.classList.remove('is-offline');
-            updateLoadTiming();
         });
         window.addEventListener('offline', () => loadbar.classList.add('is-offline'));
 
         if (document.readyState === 'complete') {
+            loadbar.classList.add('is-complete');
             finishLoading();
         } else {
             window.addEventListener('load', finishLoading, { once: true });
         }
     }
 
-    const mobileToggle = document.querySelector('[data-mobile-nav-toggle]');
-    const mobileBackdrop = document.querySelector('[data-mobile-nav-backdrop]');
-    const primaryNavigation = document.getElementById(mobileToggle?.getAttribute('aria-controls') ?? '');
-    const sidebar = document.querySelector('.sidebar');
-
-    if (app && sidebar && mobileToggle && mobileBackdrop && primaryNavigation) {
+    const mobileNavMore = document.querySelector('[data-mobile-nav-more]');
+    if (mobileNavMore) {
         const mobileViewport = window.matchMedia('(max-width: 992px)');
-        const setMenuOpen = (isOpen) => {
-            app.classList.toggle('mobile-nav-open', isOpen);
-            body.classList.toggle('mobile-nav-open', isOpen);
-            mobileBackdrop.hidden = !isOpen;
-            mobileToggle.setAttribute('aria-expanded', String(isOpen));
-            mobileToggle.setAttribute('aria-label', isOpen ? 'Tutup navigasi' : 'Buka navigasi');
-            mobileToggle.setAttribute('title', isOpen ? 'Tutup navigasi' : 'Buka navigasi');
-            sidebar.inert = mobileViewport.matches && !isOpen;
-            sidebar.setAttribute('aria-hidden', String(mobileViewport.matches && !isOpen));
+        const syncMoreMenu = () => {
+            mobileNavMore.open = !mobileViewport.matches;
         };
 
-        setMenuOpen(false);
-        mobileToggle.addEventListener('click', () => {
-            const shouldOpen = mobileToggle.getAttribute('aria-expanded') !== 'true';
-            setMenuOpen(shouldOpen);
-            if (shouldOpen) primaryNavigation.querySelector('a')?.focus();
-            else mobileToggle.focus();
-        });
-        mobileBackdrop.addEventListener('click', () => {
-            setMenuOpen(false);
-            mobileToggle.focus();
-        });
-        primaryNavigation.querySelectorAll('a').forEach((link) => {
-            link.addEventListener('click', () => setMenuOpen(false));
+        syncMoreMenu();
+        document.addEventListener('pointerdown', (event) => {
+            if (mobileViewport.matches && mobileNavMore.open && !mobileNavMore.contains(event.target)) {
+                mobileNavMore.open = false;
+            }
         });
         document.addEventListener('keydown', (event) => {
-            if (mobileToggle.getAttribute('aria-expanded') !== 'true') return;
-            if (event.key === 'Escape') {
-                setMenuOpen(false);
-                mobileToggle.focus();
-                return;
-            }
-            if (event.key === 'Tab') {
-                const links = [...primaryNavigation.querySelectorAll('a[href]')];
-                if (links.length === 0) return;
-                const first = links[0];
-                const last = links[links.length - 1];
-                if (event.shiftKey && document.activeElement === first) {
-                    event.preventDefault();
-                    last.focus();
-                } else if (!event.shiftKey && document.activeElement === last) {
-                    event.preventDefault();
-                    first.focus();
-                }
+            if (mobileViewport.matches && mobileNavMore.open && event.key === 'Escape') {
+                mobileNavMore.open = false;
+                mobileNavMore.querySelector('summary')?.focus();
             }
         });
-        mobileViewport.addEventListener('change', () => setMenuOpen(false));
     }
 
     const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
@@ -145,6 +141,84 @@ const initializePage = () => {
     window.addEventListener('offline', updateNetworkReadings);
     connection?.addEventListener?.('change', updateNetworkReadings);
 
+    const developerTools = document.querySelector('[data-devtools-live]');
+    if (developerTools) {
+        const updatedLabel = developerTools.querySelector('[data-live-updated]');
+        const numberFormat = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
+        let metricsRequest = null;
+        const formatBytes = (bytes) => {
+            if (!Number.isFinite(bytes)) return 'Tidak tersedia';
+            const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+            let value = bytes;
+            let unit = 0;
+            while (value >= 1024 && unit < units.length - 1) {
+                value /= 1024;
+                unit++;
+            }
+            return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: unit === 0 ? 0 : 1 }).format(value)} ${units[unit]}`;
+        };
+        const refreshDeveloperMetrics = async () => {
+            if (metricsRequest) return;
+            metricsRequest = (async () => {
+                const response = await fetch(developerTools.dataset.metricsUrl, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                    credentials: 'same-origin',
+                });
+                if (!response.ok) throw new Error('metrics_unavailable');
+                const metrics = await response.json();
+
+                developerTools.querySelectorAll('[data-live-metric]').forEach((element) => {
+                    const key = element.dataset.liveMetric;
+                    const isQueueMetric = key.startsWith('queue_');
+                    const value = isQueueMetric ? metrics.queue[key.slice(6)] : metrics.current[key];
+                    if (value === null || value === undefined) {
+                        element.textContent = 'Tidak tersedia';
+                    } else if (element.dataset.liveFormat === 'bytes') {
+                        element.textContent = formatBytes(Number(value));
+                    } else if (element.dataset.liveFormat === 'milliseconds') {
+                        element.textContent = `${numberFormat.format(Number(value))} ms`;
+                    } else {
+                        element.textContent = numberFormat.format(Number(value));
+                    }
+                });
+
+                const diskFree = Number(metrics.current.disk_free_bytes);
+                const diskTotal = Number(metrics.current.disk_total_bytes);
+                const diskUsed = developerTools.querySelector('[data-live-disk-used]');
+                if (diskUsed) {
+                    diskUsed.textContent = diskTotal > 0 && Number.isFinite(diskFree)
+                        ? `${Math.max(0, Math.min(100, Math.round((1 - diskFree / diskTotal) * 100)))}% terpakai.`
+                        : 'Kapasitas volume tidak tersedia.';
+                }
+                if (updatedLabel) {
+                    updatedLabel.textContent = `Diperbarui ${new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())}`;
+                }
+            })().catch(() => {
+                if (updatedLabel) updatedLabel.textContent = 'Pembaruan metrik tertunda';
+            }).finally(() => {
+                metricsRequest = null;
+            });
+            await metricsRequest;
+        };
+
+        refreshDeveloperMetrics();
+        window.setInterval(() => {
+            if (!document.hidden) refreshDeveloperMetrics();
+        }, 15000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshDeveloperMetrics();
+        });
+    }
+
+    document.querySelectorAll('[data-confirm-clear-app-log]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            if (!window.confirm('Bersihkan isi app.log? Change log dan riwayat sesi tetap tersimpan.')) {
+                event.preventDefault();
+            }
+        });
+    });
+
     const logoutDialog = document.querySelector('[data-logout-dialog]');
     if (logoutDialog) {
         let logoutTrigger = null;
@@ -186,11 +260,11 @@ const initializePage = () => {
 
             confirmText.textContent = 'Yakin ingin menghapus surat ini?';
             modal.classList.add('show');
-            body.classList.add('modal-open');
+            document.body.classList.add('modal-open');
 
             const closeModal = () => {
                 modal.classList.remove('show');
-                body.classList.remove('modal-open');
+                document.body.classList.remove('modal-open');
             };
 
             confirmBtn.onclick = () => {

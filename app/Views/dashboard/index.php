@@ -2,28 +2,46 @@
 require APP_ROOT . '/includes/header.php';
 require APP_ROOT . '/includes/sidebar.php';
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
+<div class="page-header page-header--dashboard">
+    <div class="page-header__copy">
+        <span class="eyebrow">Ringkasan operasional</span>
         <h2 class="page-title mb-1">Dashboard</h2>
-        <div class="text-secondary">Ringkasan administrasi surat masuk.</div>
     </div>
-    <a class="btn btn-dark" href="<?= e(url('surat/tambah')) ?>">+ Tambah Surat</a>
+    <a class="btn btn-primary btn-pill" href="<?= e(url('surat/tambah')) ?>">+ Tambah Surat</a>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="card stat"><div class="label">Total Surat</div><div class="value"><?= (int) $total ?></div></div></div>
-    <div class="col-md-4"><div class="card stat"><div class="label">Sudah Disposisi</div><div class="value"><?= (int) $disposisi ?></div></div></div>
-    <div class="col-md-4"><div class="card stat"><div class="label">Belum Disposisi</div><div class="value"><?= (int) $belum ?></div></div></div>
+<div class="stats-grid">
+    <article class="stat-card stat-card--primary">
+        <div class="stat-card__meta">Total surat</div>
+        <div class="stat-card__value"><?= (int) $total ?></div>
+        <div class="stat-card__note">Semua arsip aktif</div>
+    </article>
+    <article class="stat-card stat-card--success">
+        <div class="stat-card__meta">Sudah disposisi</div>
+        <div class="stat-card__value"><?= (int) $disposisi ?></div>
+        <div class="stat-card__note">Siap ditindaklanjuti</div>
+    </article>
+    <article class="stat-card stat-card--warning">
+        <div class="stat-card__meta">Belum disposisi</div>
+        <div class="stat-card__value"><?= (int) $belum ?></div>
+        <div class="stat-card__note">Butuh perhatian</div>
+    </article>
 </div>
 
 <div class="card table-card">
-    <div class="card-head"><h3>Surat Terbaru</h3><a href="<?= e(url('surat')) ?>">Lihat semua</a></div>
+    <div class="card-head">
+        <div>
+            <h3>Surat terbaru</h3>
+            <p>Daftar catatan surat yang masuk baru-baru ini.</p>
+        </div>
+        <a href="<?= e(url('surat')) ?>">Lihat semua</a>
+    </div>
     <div class="table-responsive">
         <table class="table surat-table">
-            <thead><tr><th>No Agenda</th><th>TGL Diterima</th><th>Surat Dari</th><th>Judul</th><th>Disposisi</th></tr></thead>
+            <thead><tr><th>No Agenda</th><th>Tanggal</th><th>Surat Dari</th><th>Judul</th><th>Disposisi</th></tr></thead>
             <tbody>
                 <?php if (!$terbaru): ?>
-                    <tr><td colspan="5" class="empty">Belum ada surat masuk. Pilih Tambah Surat untuk memulai pencatatan.</td></tr>
+                    <tr><td colspan="5" class="empty">Belum ada surat masuk. Pilih tambah surat untuk memulai pencatatan.</td></tr>
                 <?php else: foreach ($terbaru as $surat): ?>
                     <tr>
                         <td><?= (int) $surat['no'] ?></td>

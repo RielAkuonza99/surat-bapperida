@@ -94,6 +94,10 @@ $chart = static function (string $title, string $unit, array $history, string $k
     </div>
 </div>
 
+<?php if ($notice): ?>
+    <div class="alert alert-<?= e($notice['type']) ?>" role="status"><?= e($notice['message']) ?></div>
+<?php endif; ?>
+
 <section class="settings-profile" aria-labelledby="profile-heading">
     <div class="settings-profile-heading">
         <div class="profile-mark" aria-hidden="true"><?= e(strtoupper(mb_substr($profileUsername, 0, 1))) ?></div>
@@ -118,33 +122,33 @@ $chart = static function (string $title, string $unit, array $history, string $k
         ? max(0, min(100, (int) round((1 - $diskFree / $diskTotal) * 100)))
         : null;
     ?>
-    <section class="settings-section" aria-labelledby="system-heading">
+    <section class="settings-section" id="developer-tools" data-devtools-live data-metrics-url="<?= e(url('pengaturan/developer-tools/metrics')) ?>" aria-labelledby="system-heading">
         <div class="settings-section-heading">
             <div>
-                <h3 id="system-heading">Performa sistem</h3>
-                <p>Snapshot lokal aplikasi dan database. Bukan pemantauan server secara menyeluruh.</p>
+                <h3 id="system-heading">Developer tools</h3>
+                <p>Status teknis untuk admin. Fokus pada performa aplikasi dan integrasi internal.</p>
             </div>
-            <span class="sample-window">Sampel 24 jam, retensi 30 hari</span>
+            <span class="sample-window" data-live-updated role="status">Memuat data terkini...</span>
         </div>
 
         <div class="system-readings">
             <div class="system-reading">
-                <span>Memori proses PHP saat ini</span>
-                <strong><?= e($formatBytes((int) $current['php_memory_bytes'])) ?></strong>
+                <span>Memori PHP</span>
+                <strong data-live-metric="php_memory_bytes" data-live-format="bytes"><?= e($formatBytes((int) $current['php_memory_bytes'])) ?></strong>
             </div>
             <div class="system-reading">
-                <span>Respons database</span>
-                <strong><?= e(number_format((float) $current['database_latency_ms'], 2, ',', '.')) ?> ms</strong>
+                <span>Latency database</span>
+                <strong data-live-metric="database_latency_ms" data-live-format="milliseconds"><?= e(number_format((float) $current['database_latency_ms'], 2, ',', '.')) ?> ms</strong>
             </div>
             <div class="system-reading">
-                <span>Ruang kosong pada volume aplikasi</span>
-                <strong><?= e($formatBytes($current['disk_free_bytes'])) ?></strong>
-                <small><?= $diskUsedPercent === null ? 'Kapasitas volume tidak tersedia.' : e($diskUsedPercent . '% terpakai pada volume ini.') ?></small>
+                <span>Ruang aplikasi</span>
+                <strong data-live-metric="disk_free_bytes" data-live-format="bytes"><?= e($formatBytes($current['disk_free_bytes'])) ?></strong>
+                <small data-live-disk-used><?= $diskUsedPercent === null ? 'Kapasitas volume tidak tersedia.' : e($diskUsedPercent . '% terpakai.') ?></small>
             </div>
             <div class="system-reading">
                 <span>Runtime</span>
                 <strong>PHP <?= e(PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION) ?></strong>
-                <small><?= e(APP_ENVIRONMENT) ?> environment</small>
+                <small><?= e(APP_ENVIRONMENT) ?> mode</small>
             </div>
         </div>
 
@@ -157,33 +161,32 @@ $chart = static function (string $title, string $unit, array $history, string $k
     <section class="settings-section" aria-labelledby="network-heading">
         <div class="settings-section-heading">
             <div>
-                <h3 id="network-heading">Analisis server dan jaringan</h3>
-                <p>Waktu respons MySQL diukur dari aplikasi. Kualitas koneksi perangkat berasal dari informasi browser bila tersedia.</p>
+                <h3 id="network-heading">Koneksi dan jaringan</h3>
+                <p>Statistik koneksi browser saat ini. Nilainya berubah mengikuti kondisi perangkat.</p>
             </div>
         </div>
         <dl class="network-readings">
             <div><dt>Koneksi perangkat</dt><dd data-network-state role="status">Memeriksa koneksi…</dd></div>
             <div><dt>Jenis koneksi browser</dt><dd data-network-type>Tidak tersedia di browser ini</dd></div>
             <div><dt>Perkiraan RTT browser</dt><dd data-network-rtt>Tidak tersedia</dd></div>
-            <div><dt>Respons query MySQL</dt><dd><?= e(number_format((float) $current['database_latency_ms'], 2, ',', '.')) ?> ms</dd></div>
         </dl>
-        <p class="settings-note">RTT dan jenis koneksi browser merupakan perkiraan perangkat, tidak dikirim ke server. Tidak ada ping provider eksternal.</p>
+        <p class="settings-note">Jenis koneksi dan RTT merupakan estimasi browser dan tidak dikirim ke server.</p>
     </section>
 
     <section class="settings-section" aria-labelledby="api-heading">
         <div class="settings-section-heading">
             <div>
-                <h3 id="api-heading">Performa API dan sinkronisasi</h3>
-                <p>Status berasal dari antrean Supabase dan pemeriksaan Google Drive yang sudah dilakukan admin.</p>
+                <h3 id="api-heading">Integrasi dan sinkronisasi</h3>
+                <p>Status antrean dan koneksi eksternal untuk pemeliharaan arsip dan Google Drive.</p>
             </div>
-            <a class="btn btn-outline-primary" href="<?= e(url('sinkronisasi')) ?>">Buka antrean sinkronisasi</a>
+            <a class="btn btn-outline-primary" href="<?= e(url('sinkronisasi')) ?>">Buka antrean</a>
         </div>
 
         <dl class="api-queue-readings">
-            <div><dt>Menunggu</dt><dd><?= (int) $metrics['queue']['PENDING'] ?></dd></div>
-            <div><dt>Diproses</dt><dd><?= (int) $metrics['queue']['PROCESSING'] ?></dd></div>
-            <div><dt>Terkonfirmasi</dt><dd><?= (int) $metrics['queue']['CONFIRMED'] ?></dd></div>
-            <div><dt>Gagal</dt><dd><?= (int) $metrics['queue']['FAILED'] ?></dd></div>
+            <div><dt>Menunggu</dt><dd data-live-metric="queue_PENDING"><?= (int) $metrics['queue']['PENDING'] ?></dd></div>
+            <div><dt>Diproses</dt><dd data-live-metric="queue_PROCESSING"><?= (int) $metrics['queue']['PROCESSING'] ?></dd></div>
+            <div><dt>Terkonfirmasi</dt><dd data-live-metric="queue_CONFIRMED"><?= (int) $metrics['queue']['CONFIRMED'] ?></dd></div>
+            <div><dt>Gagal</dt><dd data-live-metric="queue_FAILED"><?= (int) $metrics['queue']['FAILED'] ?></dd></div>
         </dl>
 
         <?php if ($metrics['drive_apis']): ?>
@@ -215,4 +218,22 @@ $chart = static function (string $title, string $unit, array $history, string $k
         <p>Profil tetap dapat digunakan. Periksa koneksi MySQL dan pastikan migrasi 006 sudah diterapkan, lalu muat ulang halaman ini.</p>
     </div>
 <?php endif; ?>
+
+<?php if ($isAdmin): ?>
+    <section class="settings-section settings-log-tools" id="developer-tools-logs" aria-labelledby="logs-heading">
+        <div class="settings-section-heading">
+            <div>
+                <h3 id="logs-heading">Log aplikasi</h3>
+                <p>Bersihkan file error teknis. Change log dan riwayat sesi tidak ikut dihapus.</p>
+            </div>
+            <span class="sample-window"><?= e($formatBytes($appLogBytes)) ?></span>
+        </div>
+        <form method="post" action="<?= e(url('pengaturan/developer-tools/logs/clear')) ?>" data-confirm-clear-app-log>
+            <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
+            <button class="btn btn-outline-danger" type="submit">Bersihkan app.log</button>
+        </form>
+    </section>
+<?php endif; ?>
+
+<?php require APP_ROOT . '/app/Views/security/activity-content.php'; ?>
 <?php require APP_ROOT . '/includes/footer.php'; ?>

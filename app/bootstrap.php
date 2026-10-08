@@ -5,8 +5,15 @@ define('APP_ROOT', dirname(__DIR__));
 
 $envFile = APP_ROOT . DIRECTORY_SEPARATOR . '.env';
 if (is_file($envFile)) {
-    $environment = parse_ini_file($envFile, false, INI_SCANNER_RAW);
-    foreach ($environment ?: [] as $key => $value) {
+    $environment = @parse_ini_file($envFile, false, INI_SCANNER_RAW);
+    if ($environment === false) {
+        throw new RuntimeException('File .env tidak dapat dibaca. Periksa format setiap baris KEY=VALUE.');
+    }
+
+    foreach ($environment as $key => $value) {
+        if (!is_string($key) || !preg_match('/^[A-Z][A-Z0-9_]*$/', $key) || !is_string($value)) {
+            throw new RuntimeException('File .env berisi nama variabel atau nilai yang tidak valid.');
+        }
         if (getenv($key) === false) {
             putenv($key . '=' . $value);
             $_ENV[$key] = $value;

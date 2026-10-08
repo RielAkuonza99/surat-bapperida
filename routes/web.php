@@ -18,14 +18,16 @@ $drive = static fn (string $method): Closure => static fn () => (new GoogleDrive
 $dashboard = static fn () => (new DashboardController())->index();
 $surat = static fn (string $method): Closure => static fn () => (new SuratController())->{$method}();
 $security = static fn (string $method): Closure => static fn () => (new SecurityController())->{$method}();
-$settings = static fn () => (new SettingsController())->index();
+$settings = static fn (string $method): Closure => static fn () => (new SettingsController())->{$method}();
 $users = static fn (string $method): Closure => static fn () => (new UserController())->{$method}();
 
 $router->get('/', $auth('login'));
 $router->get('/login', $auth('login'));
 $router->post('/login', $auth('login'));
 $router->post('/logout', $auth('logout'));
-$router->get('/pengaturan', $settings);
+$router->get('/pengaturan', $settings('index'));
+$router->get('/pengaturan/developer-tools/metrics', $settings('liveMetrics'));
+$router->post('/pengaturan/developer-tools/logs/clear', $settings('clearAppLog'));
 $router->get('/dashboard', $dashboard);
 $router->get('/pengaturan/google-drive', $drive('index'));
 $router->post('/pengaturan/google-drive/{slot}', $drive('save'));
